@@ -1,0 +1,17 @@
+#elefunds label {
+    font-weight: normal;
+}
+
+#content #confirm .table {
+    border-style: solid;
+    border-width: 1px;
+}
+
+#elefunds_round_sum_container {
+    margin-bottom: 15px;
+}
+
+.elefunds_line_through {
+    text-decoration: line-through;
+    color: #ccc !important;
+}
