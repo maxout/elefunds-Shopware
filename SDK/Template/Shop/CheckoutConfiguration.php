@@ -37,7 +37,7 @@
  *
  */
 
-require_once dirname(__FILE__) . '/../../Configuration/DefaultConfiguration.php';
+require_once dirname(__FILE__) . '/ShopConfiguration.php';
 require_once dirname(__FILE__) . '/../../View/BaseView.php';
 require_once dirname(__FILE__) . '/Hooks/ShopHooks.php';
 
@@ -52,7 +52,7 @@ require_once dirname(__FILE__) . '/Hooks/ShopHooks.php';
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
  */
-class Library_Elefunds_Template_Shop_CheckoutConfiguration extends Library_Elefunds_Configuration_DefaultConfiguration {
+class Elefunds_Template_Shop_CheckoutConfiguration extends Elefunds_Template_Shop_ShopConfiguration {
 
     /**
      * @var boolean
@@ -83,9 +83,6 @@ class Library_Elefunds_Template_Shop_CheckoutConfiguration extends Library_Elefu
 
         parent::init();
 
-        $this->setView(new Library_Elefunds_View_BaseView());
-        $this->view->setTemplate('Shop');
-
         // If set to FALSE, no donation receipt if offered.
         // If TRUE you have to adjust T&Cs and send back donator information
         // Refer to the documentation for further information.
@@ -95,19 +92,16 @@ class Library_Elefunds_Template_Shop_CheckoutConfiguration extends Library_Elefu
             $this->view->assign('receivers', $this->facade->getReceivers());
         }
 
-        $this->view->addCssFile('elefunds.min.css');
-        $this->view->addJavascriptFile('elefunds.jquery.min.js');
-
         // Defaults, you can opt to override this if you like.
         $this->view->assign('currency', '€');
         $this->view->assign('currencyDelimiter', '.');
 
         $this->view->assign('roundSum', 'elefunds_round_sum');
-        $this->view->assign('roundSumContainer', 'elefunds_round_sum_container');
+        $this->view->assign('roundSumContainer', 'elefunds_below_container');
 
         // L18n
         if ($this->countrycode === 'de') {
-            $this->view->assign('elefundsDescription', 'Die elefunds Stiftung gUG leitet deine Spende zu 100% an die ausgewählten Organisationen weiter.');
+            $this->view->assign('elefundsDescription', 'Die elefunds Stiftung gUG leitet Deine Spende zu 100% an die ausgewählten Organisationen weiter.');
             $this->view->assign('slogan', 'Ja, ich möchte mit meinem Einkauf aufrunden und spenden!');
             $this->view->assign('receipt_slogan', 'Ich möchte eine Spendenquittung erhalten.');
             $this->view->assign('roundedSumString', 'Runde Summe');
@@ -118,8 +112,7 @@ class Library_Elefunds_Template_Shop_CheckoutConfiguration extends Library_Elefu
             $this->view->assign('roundedSumString', 'Round Sum');
         }
 
-        $this->view->registerAssignHook('shopWidth', 'Library_Elefunds_Template_Shop_Hooks_ShopHooks', 'calculatePadding');
-        $this->view->registerAssignHook('total', 'Library_Elefunds_Template_Shop_Hooks_ShopHooks', 'calculateRoundUp');
-
+        $this->view->registerAssignHook('shopWidth', 'Elefunds_Template_Shop_Hooks_ShopHooks', 'calculatePadding');
+        $this->view->registerAssignHook('total', 'Elefunds_Template_Shop_Hooks_ShopHooks', 'calculateRoundUp');
     }
 }

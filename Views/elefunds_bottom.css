@@ -1,0 +1,12 @@
+#elefunds {
+    background: #FFF;
+    margin-bottom: -2px;
+    margin-left: -2px;
+    border-bottom: 1px solid #DDD;
+    position: relative;
+}
+
+#elefunds_below_container {
+    border-left: 1px solid #dfdfdf;
+    border-right: 1px solid #dfdfdf;
+}

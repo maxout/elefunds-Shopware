@@ -48,6 +48,6 @@ require_once dirname(__FILE__) . '/../SDK/Template/Shop/CheckoutSuccessConfigura
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
  */
-class Shopware_Plugins_Frontend_LfndsDonation_Configuration_CheckoutSuccessConfiguration extends Library_Elefunds_Template_Shop_CheckoutSuccessConfiguration {
+class Shopware_Plugins_Frontend_LfndsDonation_Configuration_CheckoutSuccessConfiguration extends Elefunds_Template_Shop_CheckoutSuccessConfiguration {
 
 }

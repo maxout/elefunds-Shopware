@@ -51,7 +51,7 @@ require_once dirname(__FILE__) . '/SDK/Facade.php';
 class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     /**
-     * @var Library_Elefunds_Facade
+     * @var Elefunds_Facade
      */
     private $facade;
 
@@ -70,22 +70,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
     {
         $this->createConfigurationForm();
         $this->createDatabaseSchema();
-
-        $this->subscribeEvent(
-            'Enlight_Controller_Action_PreDispatch_Frontend_Checkout',
-            'onPreDispatchCheckout'
-        );
-
-        $this->subscribeEvent(
-            'Enlight_Controller_Action_PostDispatch_Frontend_Checkout',
-            'onPostDispatchCheckout',
-            0
-        );
-
-        $this->subscribeEvent(
-            'Shopware_Components_Document::assignValues::after',
-            'onBeforeAssignValuesToDocument'
-        );
+        $this->registerEvents();
 
         return TRUE;
     }
@@ -98,6 +83,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      */
     public function update($version) {
         $this->invokeApiSync(TRUE);
+        $this->registerEvents();
+        $this->createConfigurationForm();
+
         return TRUE;
     }
 
@@ -170,7 +158,67 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
         if ($action === 'finish'  && $request->isDispatched()) {
             $this->processDonation($view);
         }
+    }
 
+    /**
+     * Cancels the donation when it's removed from an order in the backend.
+     *
+     * @param Enlight_Controller_EventArgs $args
+     * @return void
+     */
+    public function onPositionRemovedFromOrder(Enlight_Controller_EventArgs $args) {
+        /** @var Shopware_Controllers_Frontend_Checkout $subject */
+        $subject = $args->getSubject();
+        $request = $subject->Request();
+
+        $action =  strtolower($request->getActionName());
+
+        // @todo remove this once fixed in core
+        // We have to check if the request is set to dispatch
+        // https://github.com/ShopwareAG/shopware-4/pull/58
+        if ($action === 'deleteposition' && $request->isDispatched()) {
+            $positions = $request->getParam('positions', array(array('id' => $request->getParam('id'))));
+            $orderId = $request->getParam('orderID', null);
+
+            if (empty($positions) || empty($orderId)) {
+                return;
+            }
+            /** @var Shopware\Models\Order\Order $order  */
+            $order = Shopware()->Models()->getRepository('Shopware\Models\Order\Order')->find($orderId);
+
+            /** @var Shopware\CustomModels\Elefunds\Donation\Repository $donationRepository  */
+            $donationRepository = Shopware()->Models()->getRepository(
+                'Shopware\CustomModels\Elefunds\Donation\Donation'
+            );
+
+            if ($order === NULL) {
+                return;
+            }
+
+            $donationsToBeCancelled = array();
+            foreach ($positions as $position) {
+
+                if (empty($position['id'])) {
+                    continue;
+                }
+
+               $model = Shopware()->Models()->find('Shopware\Models\Order\Detail', $position['id']);
+
+                //check if the model was founded.
+                if ($model instanceof \Shopware\Models\Order\Detail) {
+                    if ($model->getArticleNumber() === 'ELEFUNDS-DONATION') {
+
+                        /** @var Shopware\CustomModels\Elefunds\Donation\Donation $donation  */
+                        $donation = $donationRepository->findOneBy(array('foreignId' => $order->getNumber()));
+                        if ($donation !== NULL) {
+                            $donationsToBeCancelled[] = $donation;
+                        }
+                    }
+                }
+            }
+            $donationRepository->setStates($donationsToBeCancelled, \Shopware\CustomModels\Elefunds\Donation\Donation::SCHEDULED_FOR_CANCELLATION);
+            $this->invokeApiSync(TRUE);
+        }
     }
 
     /**
@@ -213,7 +261,13 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
                         $container['Content_Info']['value'] .= '<p>' . $additionalInvoiceText . '</p>';
                         $document->_view->assign('Containers', $container);
                     }
+
+                    // Since tax is calculated for existing articles and not virtual ones, we add it here:
+                    $positions[0][$key]['tax'] = 0;
+                    $positions[0] = array_values($positions[0]);
+                    $document->_view->assign('Pages', $positions);
                 }
+
                 break;
             }
         }
@@ -245,7 +299,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
     protected function prepareDonation(Enlight_Controller_Request_RequestHttp $request) {
         $params = $request->getParams();
 
-        if (isset($params['elefunds_checkbox']) && isset($params['elefunds_donation_cent']) && ctype_digit($params['elefunds_donation_cent'])) {
+        if (isset($params['elefunds_agree']) && isset($params['elefunds_donation_cent']) && ctype_digit($params['elefunds_donation_cent'])) {
 
             /** +++ Input Validation +++ */
             $session = Shopware()->Session();
@@ -256,7 +310,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
             // floating point precision.
             $grandTotal = (int)(string)($session['sOrderVariables']['sAmount'] * 100);
 
-            $receiverIds = array_map(function($x) { return (int)$x; }, $params['elefunds_receiver']);
+            $receiverIds = array_map(function($x) { return (int)$x; }, explode(',', $params['elefunds_receivers']));
 
             if (isset($params['elefunds_suggested_round_up_cent']) && ctype_digit($params['elefunds_suggested_round_up_cent'])) {
                 $suggestedRoundUp = (int)$params['elefunds_suggested_round_up_cent'];
@@ -402,7 +456,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
         $session = Shopware()->Session();
         $paymentProviderId = $session['sOrderVariables']['sPayment']['id'];
 
-        if ($this->isAcceptedPaymentProvider($paymentProviderId)) {
+        if (Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::isAcceptedPaymentProvider($paymentProviderId)) {
             $this->Application()->Template()->addTemplateDir(
                 $this->Path() . 'Views/', 'elefunds'
             );
@@ -422,10 +476,16 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
                 }
             }
 
+
+            $position = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsPosition');
+            $position = in_array($position, array('bottom', 'top')) ? $position : 'bottom';
+            $positionTemplate = sprintf('checkout_%s.tpl', $position);
+            $positionWidthKey = sprintf('module/widthInPixel/%s', ucfirst($position));
+
             $facade->getConfiguration()
                 ->getView()
                 ->assign('receivers', $receivers)
-                ->assign('shopWidth', Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('module/widthInPixel'))
+                ->assign('shopWidth', Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal($positionWidthKey))
                 ->assign('currencyDelimiter', $facade->getConfiguration()->getCountrycode() === 'de' ? ',' : '.')
                 ->assign('total', $view->sAmount * 100);
 
@@ -434,8 +494,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
                 $view->elefundsCss = $facade->getTemplateCssFiles();
                 $view->elefundsJs = $facade->getTemplateJavascriptFiles();
                 $view->extendsTemplate('checkout.tpl');
+                $view->extendsTemplate($positionTemplate);
 
-            } catch (Library_Elefunds_Exception_ElefundsCommunicationException $error) {
+            } catch (Elefunds_Exception_ElefundsCommunicationException $error) {
                 // Something went wrong. Hence, we do not display the plugin at  all.
             }
         }
@@ -465,7 +526,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return string
      */
     public function getVersion() {
-        return '1.0.8';
+        return '1.1.0';
     }
 
 
@@ -473,7 +534,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * Configures the facade based on the plugin settings and the current locale.
      *
      * @param bool $checkoutSuccess
-     * @return Library_Elefunds_Facade
+     * @return Elefunds_Facade
      */
     protected  function getConfiguredFacade($checkoutSuccess = FALSE) {
 
@@ -484,13 +545,19 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
             } else {
                 $configuration = new Shopware_Plugins_Frontend_LfndsDonation_Configuration_CheckoutConfiguration();
             }
-
+            
             $configuration->setClientId(Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsClientId'))
                 ->setApiKey(Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsApiKey'))
                 ->setCountrycode(Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager::getLanguage());
-
-            $this->facade = new Library_Elefunds_Facade($configuration);
-
+                
+            $this->facade = new Elefunds_Facade($configuration);
+            $this->facade->getConfiguration()
+                ->getView()->assign('skin', array(
+                                        'theme' =>  Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsTheme'),
+                                        'color' =>  Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsColor')
+                                    )
+            );
+            
         }
 
         return $this->facade;
@@ -580,6 +647,51 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
         );
         /** ^^^ API Credentials ^^^ */
 
+        /** +++ Theming +++ */
+
+        $form->setElement(
+            'select',
+            'elefundsPosition',
+            array(
+                'label' => 'Position',
+                'store' => array(
+                    array('top', 'oben'),
+                    array('bottom', 'unten')
+                ),
+                'value' => 'bottom'
+            )
+        );
+
+        $form->setElement(
+            'select',
+            'elefundsTheme',
+            array(
+                'label' => 'Schema',
+                'store' => array(
+                    array('light', 'hell'),
+                    array('dark', 'dunkel')
+                ),
+                'value' => 'light'
+            )
+        );
+        
+        $form->setElement(
+            'select',
+            'elefundsColor',
+            array(
+                'label' => 'Farbe',
+                'store' => array(
+                    array('orange', 'orange'),
+                    array('blue', 'blau'),
+                    array('green', 'grün'),
+                    array('purple', 'violet')
+                ),
+                'value' => 'orange'
+            )
+        );
+
+        /** ^^^ Theming ^^^ */
+
         /** +++ Allowed payment options +++ */
 
         /** @var Shopware\Models\Payment\Repository $paymentRepository  */
@@ -602,15 +714,28 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
 
     }
 
-    /**
-     * Checks whether a given payment provider (by id) is among the selected
-     * payment providers in our module configuration.
-     *
-     * @param $paymentProviderId
-     * @return boolean
-     */
-    protected function isAcceptedPaymentProvider($paymentProviderId) {
-        return Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsPaymentProvider' . $paymentProviderId);
+    protected function registerEvents() {
+
+        $this->subscribeEvent(
+            'Enlight_Controller_Action_PreDispatch_Frontend_Checkout',
+            'onPreDispatchCheckout'
+        );
+
+        $this->subscribeEvent(
+            'Enlight_Controller_Action_PostDispatch_Frontend_Checkout',
+            'onPostDispatchCheckout',
+            0
+        );
+
+        $this->subscribeEvent(
+            'Shopware_Components_Document::assignValues::after',
+            'onBeforeAssignValuesToDocument'
+        );
+
+        $this->subscribeEvent(
+            'Enlight_Controller_Action_PreDispatch_Backend_Order',
+            'onPositionRemovedFromOrder'
+        );
     }
 
 }

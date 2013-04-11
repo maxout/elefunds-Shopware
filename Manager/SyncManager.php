@@ -52,7 +52,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
 {
 
     /**
-     * @var Library_Elefunds_Facade
+     * @var Elefunds_Facade
      */
     protected $facade;
 
@@ -64,14 +64,14 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
     /**
      * @var array
      */
-    protected $donationsToBeVerified;
+    protected $donationsToBeCompleted;
 
     /**
      * Initialisation of the sync process.
      *
-     * @param Library_Elefunds_Facade $facade
+     * @param Elefunds_Facade $facade
      */
-    public function __construct(Library_Elefunds_Facade $facade) {
+    public function __construct(Elefunds_Facade $facade) {
          $this->facade = $facade;
     }
 
@@ -104,7 +104,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
             $this->facade->getConfiguration()->setCountrycode('en');
             $englishReceivers = $this->facade->getReceivers();
 
-        } catch (Library_Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
             // Pass, we still use the old receivers.
         }
 
@@ -146,7 +146,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
         $donationModels = $donationRepository->findSyncables();
 
         $this->donationsToBeCancelled = array();
-        $this->donationsToBeVerified = array();
+        $this->donationsToBeCompleted = array();
 
         $donationsToBeAdded = array();
         $donationsWithPendingState = array();
@@ -164,7 +164,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
                     $this->donationsToBeCancelled[$donationModel->getForeignId()] = $donationModel;
                     break;
 
-                case Donation::SCHEDULED_FOR_VERIFICATION:
+                case Donation::SCHEDULED_FOR_COMPLETION:
                     $this->donationsToBeVerified[$donationModel->getForeignId()] = $donationModel;
                     break;
 
@@ -181,27 +181,25 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
         try {
             $this->facade->addDonations($this->mapArrayOfEntitiesToSDKObject($donationsToBeAdded));
             $donationRepository->setStates($donationsToBeAdded, Donation::PENDING);
-        } catch (Library_Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
             $donationRepository->setStates($donationsToBeAdded, Donation::SCHEDULED_FOR_ADDING);
         }
 
         // Cancel donations
         try {
-            $this->facade->deleteDonations(array_keys($this->donationsToBeCancelled));
+            $this->facade->cancelDonations(array_keys($this->donationsToBeCancelled));
             $donationRepository->setStates($this->donationsToBeCancelled, Donation::CANCELLED);
-        } catch (Library_Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
             $donationRepository->setStates($this->donationsToBeCancelled, Donation::SCHEDULED_FOR_CANCELLATION);
         }
 
         // Verify donation
-        /* +++ TO BE COMING +++
          try {
-            $this->facade->verifyDonations(array_keys($this->donationsToBeVerified));
-            $donationRepository->setStates($this->donationsToBeVerified, Donation::VERIFIED);
-        } catch (Library_Elefunds_Exception_ElefundsCommunicationException $exception) {
-            $donationRepository->setStates($this->donationsToBeVerified, Donation::SCHEDULED_FOR_VERIFICATION);
+            $this->facade->completeDonations(array_keys($this->donationsToBeCompleted));
+            $donationRepository->setStates($this->donationsToBeCompleted, Donation::COMPLETED);
+        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
+            $donationRepository->setStates($this->donationsToBeCompleted, Donation::SCHEDULED_FOR_COMPLETION);
         }
-          ^^^ TO BE COMING ^^^ */
 
         $donationRepository->persistAll();
 
@@ -226,13 +224,13 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
 
         if (count($donationModels) > 0) {
             $shopwareCancelledStates = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('states/cancelled');
-            $shopwareVerifiedStates = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('states/verified');
+            $shopwareCompletedStates = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('states/completed');
 
             $orderStatesSql = '
                 SELECT ordernumber, status
                 FROM s_order
                 WHERE ordernumber IN (' . implode(',', array_keys($donationModels)) . ')
-                AND status IN (' . implode(',', array_merge($shopwareVerifiedStates, $shopwareCancelledStates)) . ')
+                AND status IN (' . implode(',', array_merge($shopwareCompletedStates, $shopwareCancelledStates)) . ')
             ';
 
 
@@ -242,8 +240,8 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
                 if (in_array((int)$orderState['status'], $shopwareCancelledStates)) {
                     $this->donationsToBeCancelled[(int)$orderState['ordernumber']] = $donationModels[(int)$orderState['ordernumber']];
                 }
-                if (in_array((int)$orderState['status'], $shopwareVerifiedStates)) {
-                    $this->donationsToBeVerified[(int)$orderState['ordernumber']] = $donationModels[(int)$orderState['ordernumber']];
+                if (in_array((int)$orderState['status'], $shopwareCompletedStates)) {
+                    $this->donationsToBeCompleted[(int)$orderState['ordernumber']] = $donationModels[(int)$orderState['ordernumber']];
                 }
             }
         }
@@ -268,7 +266,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
                 ->setGrandTotal($donationModel->getGrandTotal())
                 ->setReceiverIds($donationModel->getReceiverIds())
                 ->setAvailableReceiverIds($donationModel->getAvailableReceiverIds())
-                ->setTime(new DateTime());
+                ->setTime($donationModel->getTime());
 
             try {
                 $donation->setDonator(

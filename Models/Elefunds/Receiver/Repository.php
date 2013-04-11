@@ -80,14 +80,14 @@ class Repository extends ModelRepository
     /**
      * Maps an array of receivers (as returned from the SDK) to a doctrine model.
      *
-     * @param array $receivers that are implementing Library_Elefunds_Model_ReceiverInterface
+     * @param array $receivers that are implementing Elefunds_Model_ReceiverInterface
      * @param string $languageCode
      *
      * @return \Shopware\CustomModels\Elefunds\Receiver\Repository
      */
     public function mapArrayOfSDKReceiversToEntitiesAndSave(array $receivers, $languageCode) {
 
-        /** @var \Library_Elefunds_Model_ReceiverInterface $receiver */
+        /** @var \Elefunds_Model_ReceiverInterface $receiver */
         foreach ($receivers as $receiver) {
 
             $entity = new Receiver();

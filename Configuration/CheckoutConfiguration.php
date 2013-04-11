@@ -48,7 +48,7 @@ require_once dirname(__FILE__) . '/../SDK/Template/Shop/CheckoutConfiguration.ph
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
  */
-class Shopware_Plugins_Frontend_LfndsDonation_Configuration_CheckoutConfiguration extends Library_Elefunds_Template_Shop_CheckoutConfiguration {
+class Shopware_Plugins_Frontend_LfndsDonation_Configuration_CheckoutConfiguration extends Elefunds_Template_Shop_CheckoutConfiguration {
 
     /**
      * Smart caching is on, so we do not need that.

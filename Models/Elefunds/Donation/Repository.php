@@ -72,12 +72,12 @@ class Repository extends ModelRepository
 
                 ->where('donation.state = :scheduledForAdding')
                 ->orWhere('donation.state = :scheduledForCancellation')
-                ->orWhere('donation.state = :scheduledForVerification')
+                ->orWhere('donation.state = :scheduledForCompletion')
                 ->orWhere('(donation.state = :pending AND donation.time > :observationTime)')
 
                 ->setParameter('scheduledForAdding', Donation::SCHEDULED_FOR_ADDING)
                 ->setParameter('scheduledForCancellation', Donation::SCHEDULED_FOR_CANCELLATION)
-                ->setParameter('scheduledForVerification', Donation::SCHEDULED_FOR_VERIFICATION)
+                ->setParameter('scheduledForCompletion', Donation::SCHEDULED_FOR_COMPLETION)
                 ->setParameter('pending', Donation::PENDING)
                 ->setParameter('observationTime', $observationTime->format('Y-m-d H:i:s'));
 
@@ -126,13 +126,13 @@ class Repository extends ModelRepository
      * @return void
      */
     public function addDonation($foreignId, $roundup, $grandTotal, array $receivers, $availableReceivers, $userData, $languageCode, $suggestedRoundUp = 0) {
-        $donation = new \Shopware\CustomModels\Elefunds\Donation\Donation();
+        $donation = new Donation();
         $donation->setForeignId($foreignId)
             ->setAmount((int)$roundup)
             ->setGrandTotal((int)$grandTotal)
             ->setReceiverIds($receivers)
             ->setAvailableReceiverIds($availableReceivers)
-            ->setTime(new \DateTime())
+            ->setTime(new \DateTime(NULL, new \DateTimeZone('UTC')))
             ->setSuggestedAmount((int)$suggestedRoundUp);
 
         foreach ($userData as $key => $value) {

@@ -87,10 +87,11 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
 
         self::$defaultConfiguration = array(
             'documents/shippingTemplate'       =>  'index_ls.tpl',
-            'states/verified'                  =>  array(2),
+            'states/completed'                 =>  array(2),
             'states/cancelled'                 =>  array(4),
             'donations/daysToLookForPending'   =>  45,
-            'module/widthInPixel'              =>  996,
+            'module/widthInPixel/Top'          =>  996,
+            'module/widthInPixel/Bottom'       =>  976,
             'share/includeSocialMediaShare'    =>  TRUE
         );
     }
@@ -121,6 +122,18 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
         } else {
             return(self::$defaultConfiguration[$name]);
         }
+    }
+
+
+    /**
+     * Checks whether a given payment provider (by id) is among the selected
+     * payment providers in our module configuration.
+     *
+     * @param $paymentProviderId
+     * @return boolean
+     */
+    public static function isAcceptedPaymentProvider($paymentProviderId) {
+        return Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsPaymentProvider' . $paymentProviderId);
     }
 
 }

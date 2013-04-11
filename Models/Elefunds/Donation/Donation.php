@@ -65,10 +65,10 @@ class Donation extends ModelEntity
      */
     const SCHEDULED_FOR_ADDING          = 0,
           SCHEDULED_FOR_CANCELLATION    = 1,
-          SCHEDULED_FOR_VERIFICATION    = 2,
+          SCHEDULED_FOR_COMPLETION      = 2,
           PENDING                       = 3,
           CANCELLED                     = 4,
-          VERIFIED                      = 5;
+          COMPLETED                     = 5;
 
     /**
      * @ORM\Column(name="id", type="integer", nullable=false)

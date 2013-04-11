@@ -102,7 +102,6 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_DonationManager
      * @param array $userData
      */
     public function __construct($roundup, array $receiverIds, $grandTotal, $suggestedRoundUp = 0, array $userData = array()) {
-
         $this->roundup = $roundup;
         $this->grandTotal = $grandTotal;
         $this->suggestedRoundUp = $suggestedRoundUp;

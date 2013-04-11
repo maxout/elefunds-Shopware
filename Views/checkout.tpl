@@ -2,18 +2,11 @@
     {foreach $elefundsCss as $css}
         <link type="text/css" media="all" rel="stylesheet" href="{link file="engine/Shopware/Plugins/Community/Frontend/LfndsDonation/SDK/$css" }" />
     {/foreach}
-    
-    <link type="text/css" media="all" rel="stylesheet" href="{link file="engine/Shopware/Plugins/Community/Frontend/LfndsDonation/Views/elefunds.css" }" />
 {/block}
 
 {block name="frontend_index_header_javascript_jquery" append}
     {foreach $elefundsJs as $js}
         <script type="text/javascript" src="{link file="engine/Shopware/Plugins/Community/Frontend/LfndsDonation/SDK/$js"}"></script>
-        <script type="text/javascript" src="{link file="engine/Shopware/Plugins/Community/Frontend/LfndsDonation/Views/elefunds.js" }"></script>
     {/foreach}
-{/block}
-
-{block name='frontend_checkout_confirm_submit' prepend}
-    <div class="clear"></div>
-    {$elefunds}
+        <script type="text/javascript" src="{link file="engine/Shopware/Plugins/Community/Frontend/LfndsDonation/Views/elefunds.js" }"></script>
 {/block}

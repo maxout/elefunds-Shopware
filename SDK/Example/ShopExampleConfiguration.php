@@ -50,7 +50,7 @@ require_once dirname(__FILE__) . '/../Template/Shop/CheckoutConfiguration.php';
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
  */
-class Library_Elefunds_Example_ShopExampleConfiguration extends Library_Elefunds_Template_Shop_CheckoutConfiguration {
+class Elefunds_Example_ShopExampleConfiguration extends Elefunds_Template_Shop_CheckoutConfiguration {
     
     //Insert your clientID and apiKey
     protected $clientId = 1001;
@@ -73,7 +73,6 @@ class Library_Elefunds_Example_ShopExampleConfiguration extends Library_Elefunds
 
         // These are default Values, you can override this if you have another currency # $this->view->assign('currency', '€'); #
         $this->view->assign('currencyDelimiter', '.');
-       
     }
  
 }
