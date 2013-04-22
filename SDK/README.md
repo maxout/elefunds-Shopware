@@ -1,7 +1,7 @@
-elefunds PHP Client Library 1.2.0
+elefunds PHP Client Library 1.2.1
 =================================
 
-Welcome to our amazing 1.2.0 version of the elefunds PHP Client Library.
+Welcome to the elefunds PHP Client Library.
 
 We put a lot of effort into making your daily work with our elefunds API an ease and loads of fun.
 Therefore we tried to minimize the workload for shop implementers and developers as much as possible 
@@ -23,7 +23,7 @@ For questions regarding the API or the PHP Client Library, please contact Christ
 Prerequisites
 -------------
 
-This PHP Client Library requires PHP 5.2 or higher and should therefore work on every modern and even a bit aged system.
+This PHP Client Library requires PHP 5.3 or higher and should therefore work on every modern and even a bit aged system.
 However, if you want to run the tests, you need PHP 5.3.8 or higher. The tests are mainly for code quality and are not
 needed in a production environment.
 

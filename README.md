@@ -1,4 +1,4 @@
-elefunds Shopware Module - v 1.1.0
+elefunds Shopware Module - v1.1.4
 =================================
 
 The [elefunds](https://elefunds.de) plugin for Shopware. The plugin can be found in the [Shopware Community Store](http://store.shopware.de/werbung-marketing/elefunds-spendenmodul). Alternatively, to install the plugin manually, place the content of this repository into the following folder:
@@ -9,6 +9,18 @@ Based on the [elefunds SDK and API](http://elefunds.github.io/elefunds-SDK/).
 
 Changelog
 ---------
+
+*Version 1.1.4*
+- Code clean up
+
+*Version 1.1.3*
+- Merged fresh SDK
+
+*Version 1.1.2*
+- Merged fresh SDK
+
+*Version 1.1.1*
+- Bugfix for non-donation checkout
 
 *Version 1.1.0*
 - trusted shops verified checkout layout

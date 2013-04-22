@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  var lfnds_changeSum = new elefundsSum();
+  var lfndsSum = new elefundsSum();
 
   //Move donation fields into the form
   $('#elefunds_donation_cent').insertBefore('#sAGB');
@@ -8,7 +8,7 @@ $(document).ready(function() {
   //Add field for the selected receivers to the form
   $('<input type="hidden" id="elefunds_receivers" name="elefunds_receivers" value="" />').insertBefore('#sAGB');
   function updateReceivers() {
-    var receivers = $('input[name="elefunds_receiver[]"]:checked').map(function() {
+    var receivers = $('input[name="elefunds_receivers[]"]:checked').map(function() {
       return $(this).val();
     }).get().join();
 
@@ -24,12 +24,13 @@ $(document).ready(function() {
   });
 
   //Copy the elefunds receipt field into the form
-  $('<input type="hidden" id="elefunds_receipt_input" name="elefunds_receipt_input" value="false" />').insertBefore('#sAGB');
+  $('<input type="hidden" id="elefunds_receipt_hidden" name="elefunds_receipt" value="false" />').insertBefore('#sAGB');
   $('#elefunds_receipt_checkbox').on('change', function() {
-    $('#elefunds_receipt_input').val($(this).prop('checked'));
+    console.log('RECEIPT');
+    $('#elefunds_receipt_hidden').val($(this).prop('checked'));
   });
 
-  $('[name="elefunds_receiver[]"]').on('change', function() {
+  $('[name="elefunds_receivers[]"]').on('change', function() {
     updateReceivers();
   });
 

@@ -37,6 +37,7 @@
  */
 
 require_once dirname(__FILE__) . '/SDK/Facade.php';
+require_once dirname(__FILE__) . '/SDK/Template/Shop/Helper/RequestHelper.php';
 
 /**
  * Bootstrap for the elefunds module.
@@ -82,6 +83,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return bool
      */
     public function update($version) {
+        // Temp bugfix for 1.1.0 backport
+        Shopware()->Db()->query("DELETE FROM s_plugin_elefunds_donation WHERE ISNULL(receiver_ids) OR receiver_ids = ''");
+
         $this->invokeApiSync(TRUE);
         $this->registerEvents();
         $this->createConfigurationForm();
@@ -95,6 +99,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return bool
      */
     public function uninstall() {
+        // Temp bugfix for 1.1.0 backport
+        Shopware()->Db()->query("DELETE FROM s_plugin_elefunds_donation WHERE ISNULL(receiver_ids) OR receiver_ids = ''");
+
         $this->invokeApiSync(TRUE);
         $this->registerCustomModels();
         $this->dropDatabaseSchema();
@@ -298,27 +305,20 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      */
     protected function prepareDonation(Enlight_Controller_Request_RequestHttp $request) {
         $params = $request->getParams();
+        $requestHelper = new Elefunds_Template_Shop_Helper_RequestHelper($params);
 
-        if (isset($params['elefunds_agree']) && isset($params['elefunds_donation_cent']) && ctype_digit($params['elefunds_donation_cent'])) {
+        if ($requestHelper->isActiveAndValid()) {
 
             /** +++ Input Validation +++ */
             $session = Shopware()->Session();
 
-            $roundup  = (int)$params['elefunds_donation_cent'];
+            $roundup  = $requestHelper->getRoundUp();
 
             // We have to cast the amount to string and then to int, as the session does not care about
             // floating point precision.
             $grandTotal = (int)(string)($session['sOrderVariables']['sAmount'] * 100);
 
-            $receiverIds = array_map(function($x) { return (int)$x; }, explode(',', $params['elefunds_receivers']));
-
-            if (isset($params['elefunds_suggested_round_up_cent']) && ctype_digit($params['elefunds_suggested_round_up_cent'])) {
-                $suggestedRoundUp = (int)$params['elefunds_suggested_round_up_cent'];
-            } else {
-                $suggestedRoundUp = 0;
-            }
-
-            if (isset($params['elefunds_receipt_input'])) {
+            if ($requestHelper->isDonationReceiptRequested()) {
                 $userData = $session['sOrderVariables']['sUserData'];
                 $user = array(
                     'firstName'      =>  (string)$userData['billingaddress']['firstname'],
@@ -334,7 +334,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
             }
             /** ^^^ Input Validation ^^^ */
 
-            $this->donationManager = new Shopware_Plugins_Frontend_LfndsDonation_Manager_DonationManager($roundup, $receiverIds, $grandTotal, $suggestedRoundUp, $user);
+            $this->donationManager = new Shopware_Plugins_Frontend_LfndsDonation_Manager_DonationManager($roundup, $requestHelper->getReceiverIds(), $grandTotal, $requestHelper->getSuggestedRoundUp(), $user);
 
         }
     }
@@ -526,7 +526,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return string
      */
     public function getVersion() {
-        return '1.1.0';
+        return '1.1.4';
     }
 
 
@@ -674,18 +674,23 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
                 'value' => 'light'
             )
         );
+
+        $facade = $this->getConfiguredFacade();
+
+        /** @var Elefunds_Template_Shop_ShopConfiguration $config  */
+        $config = $facade->getConfiguration();
+        $colors = $config->getAvailableColors();
+
+        foreach ($colors as $color) {
+            $colorOptions[] = array($color, $color);
+        }
         
         $form->setElement(
             'select',
             'elefundsColor',
             array(
                 'label' => 'Farbe',
-                'store' => array(
-                    array('orange', 'orange'),
-                    array('blue', 'blau'),
-                    array('green', 'grün'),
-                    array('purple', 'violet')
-                ),
+                'store' => $colorOptions,
                 'value' => 'orange'
             )
         );
@@ -714,6 +719,12 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
 
     }
 
+    /**
+     * Registers events for checkout, Document creation and deletion from
+     * order positions in the backend.
+     *
+     * @return void
+     */
     protected function registerEvents() {
 
         $this->subscribeEvent(
