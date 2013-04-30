@@ -165,7 +165,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
                     break;
 
                 case Donation::SCHEDULED_FOR_COMPLETION:
-                    $this->donationsToBeVerified[$donationModel->getForeignId()] = $donationModel;
+                    $this->donationsToBeCompleted[$donationModel->getForeignId()] = $donationModel;
                     break;
 
                 case Donation::PENDING:
