@@ -1,10 +1,9 @@
 <?php
-use Shopware\CustomModels\Elefunds\Donation\Donation;
 
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +36,11 @@ use Shopware\CustomModels\Elefunds\Donation\Donation;
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+use Lfnds\Facade;
+use Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager as ConfigurationManager;
+use Lfnds\Exception\ElefundsCommunicationException;
+use Shopware\CustomModels\Elefunds\Donation\Donation;
+
 /**
  * Syncs between database and API.
  *
@@ -52,7 +56,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
 {
 
     /**
-     * @var Elefunds_Facade
+     * @var Facade
      */
     protected $facade;
 
@@ -68,73 +72,16 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
 
     /**
      * Initialisation of the sync process.
-     *
-     * @param Elefunds_Facade $facade
      */
-    public function __construct(Elefunds_Facade $facade) {
-         $this->facade = $facade;
+    public function __construct() {
+         $this->facade = ConfigurationManager::getConfiguredFacade();
     }
 
-    /**
-     * Retrieves fresh sets of receivers.
-     *
-     * The sync is done for the german and english language. For convenience,
-     * the receivers of the current shopware locale are returned.
-     *
-     * @return array with receivers of the facade's original countrycode
-     */
-    public function syncReceivers() {
-
-        /** @var Shopware\CustomModels\Elefunds\Receiver\Repository $receiverRepository */
-        $receiverRepository = Shopware()->Models()->getRepository(
-            'Shopware\CustomModels\Elefunds\Receiver\Receiver'
-        );
-
-        // We want this to be available from anywhere, so we do not set state!
-        $originalCountryCode = $this->facade->getConfiguration()->getCountrycode();
-
-        $returnedReceivers = array();
-        $germanReceivers = array();
-        $englishReceivers = array();
-
-        try {
-            $this->facade->getConfiguration()->setCountrycode('de');
-            $germanReceivers = $this->facade->getReceivers();
-
-            $this->facade->getConfiguration()->setCountrycode('en');
-            $englishReceivers = $this->facade->getReceivers();
-
-        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
-            // Pass, we still use the old receivers.
-        }
-
-        if (count($germanReceivers) > 0) {
-            $receiverRepository->removeByLanguage('de')
-                               ->mapArrayOfSDKReceiversToEntitiesAndSave($germanReceivers, 'de');
-        }
-
-        if (count($englishReceivers) > 0) {
-            $receiverRepository->removeByLanguage('en')
-                               ->mapArrayOfSDKReceiversToEntitiesAndSave($englishReceivers, 'en');
-        }
-
-        if ($originalCountryCode === 'de') {
-            $returnedReceivers = $germanReceivers;
-        }
-
-        if ($originalCountryCode === 'en') {
-            $returnedReceivers = $englishReceivers;
-        }
-
-        $this->facade->getConfiguration()->setCountrycode($originalCountryCode);
-
-        return $returnedReceivers;
-    }
 
     /**
      * Syncs all donations to the API.
      *
-     * @return \Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
+     * @return $this
      */
     public function syncDonations() {
 
@@ -179,9 +126,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
 
         // Add pending donations
         try {
-            $this->facade->addDonations($this->mapArrayOfEntitiesToSDKObject($donationsToBeAdded));
+            $this->facade->addDonations($donationsToBeAdded);
             $donationRepository->setStates($donationsToBeAdded, Donation::PENDING);
-        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (ElefundsCommunicationException $exception) {
             $donationRepository->setStates($donationsToBeAdded, Donation::SCHEDULED_FOR_ADDING);
         }
 
@@ -189,7 +136,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
         try {
             $this->facade->cancelDonations(array_keys($this->donationsToBeCancelled));
             $donationRepository->setStates($this->donationsToBeCancelled, Donation::CANCELLED);
-        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (ElefundsCommunicationException $exception) {
             $donationRepository->setStates($this->donationsToBeCancelled, Donation::SCHEDULED_FOR_CANCELLATION);
         }
 
@@ -197,7 +144,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
          try {
             $this->facade->completeDonations(array_keys($this->donationsToBeCompleted));
             $donationRepository->setStates($this->donationsToBeCompleted, Donation::COMPLETED);
-        } catch (Elefunds_Exception_ElefundsCommunicationException $exception) {
+        } catch (ElefundsCommunicationException $exception) {
             $donationRepository->setStates($this->donationsToBeCompleted, Donation::SCHEDULED_FOR_COMPLETION);
         }
 
@@ -215,16 +162,14 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
      * that are using the deprecated sOrder->setOrderState() method, that does not necessarily trigger an
      * event.
      *
-     * @todo normal circumstances assumed should work with IN(?) -> array_keys($donationsModels), but it doesn't
-     *
      * @param array $donationModels
      * @return array
      */
     protected function filterPendingDonations(array $donationModels) {
 
         if (count($donationModels) > 0) {
-            $shopwareCancelledStates = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('states/cancelled');
-            $shopwareCompletedStates = Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('states/completed');
+            $shopwareCancelledStates = ConfigurationManager::getInternal('states/cancelled');
+            $shopwareCompletedStates = ConfigurationManager::getInternal('states/completed');
 
             $orderStatesSql = '
                 SELECT ordernumber, status
@@ -247,44 +192,4 @@ class Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager
         }
     }
 
-    /**
-     * Maps an array of Donation entities to SDK Objects.
-     *
-     * @param array
-     * @return array
-     */
-    protected function mapArrayOfEntitiesToSDKObject(array $donationModels) {
-
-        $sdkDonations = array();
-
-        /** @var Donation $donationModel */
-        foreach ($donationModels as $donationModel) {
-            $donation = $this->facade->createDonation()
-                ->setForeignId($donationModel->getForeignId())
-                ->setAmount($donationModel->getAmount())
-                ->setSuggestedAmount($donationModel->getSuggestedAmount())
-                ->setGrandTotal($donationModel->getGrandTotal())
-                ->setReceiverIds($donationModel->getReceiverIds())
-                ->setAvailableReceiverIds($donationModel->getAvailableReceiverIds())
-                ->setTime($donationModel->getTime());
-
-            try {
-                $donation->setDonator(
-                    $donationModel->getDonatorEmail(),
-                    $donationModel->getDonatorFirstName(),
-                    $donationModel->getDonatorLastName(),
-                    $donationModel->getDonatorStreetAddress(),
-                    $donationModel->getDonatorZip(),
-                    $donationModel->getDonatorCity(),
-                    $donationModel->getDonatorCountrycode()
-                );
-            } catch(InvalidArgumentException $exception) {
-                // It's always easier to ask for forgiveness, than for permission.
-            }
-
-            $sdkDonations[] = $donation;
-        }
-
-        return $sdkDonations;
-    }
 }

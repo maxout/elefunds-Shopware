@@ -3,7 +3,7 @@
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-require_once dirname(__FILE__) . '/../SDK/Template/Shop/CheckoutSuccessConfiguration.php';
+use Lfnds\Facade;
+use Lfnds\Template\Shop\CheckoutConfiguration;
+use Lfnds\Template\Shop\CheckoutSuccessConfiguration;
+use \Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager as LocaleManager;
+use \Shopware_Plugins_Frontend_LfndsDonation_Bootstrap as Bootstrap;
+
+require_once dirname(__FILE__) . '/../SDK/Lfnds/Template/Shop/CheckoutConfiguration.php';
+require_once dirname(__FILE__) . '/../SDK/Lfnds/Template/Shop/CheckoutSuccessConfiguration.php';
 
 /**
  * Configuration Manager for the Shopware module.
@@ -65,6 +72,16 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
     protected static $defaultConfiguration;
 
     /**
+     * The configured elefunds facade.
+     *
+     * Per request, there can be only one configuration. You can opt to switch it at runtime,
+     * but it may not be a good idea.
+     *
+     * @var Facade
+     */
+    protected static $configuredFacade;
+
+    /**
      * Initializes the values for configuration.
      *
      * This file includes technical data that may not be changed.
@@ -77,9 +94,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
      */
     protected static function initInternalConfiguration() {
 
-        $internalConfigurationFile = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'internalConfig.php';
+        $internalConfigurationFile = __DIR__ . DIRECTORY_SEPARATOR . 'internalConfig.php';
 
-        if (file_exists($internalConfigurationFile) && is_readable($internalConfigurationFile)) {
+        if (is_readable($internalConfigurationFile)) {
             self::$internalConfiguration = include($internalConfigurationFile);
         } else {
             self::$internalConfiguration = array();
@@ -89,9 +106,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
             'documents/shippingTemplate'       =>  'index_ls.tpl',
             'states/completed'                 =>  array(2),
             'states/cancelled'                 =>  array(4),
-            'donations/daysToLookForPending'   =>  45,
-            'module/widthInPixel/Top'          =>  996,
-            'module/widthInPixel/Bottom'       =>  976,
+            'donations/daysToLookForPending'   =>  60,
+            'module/additionalCss/checkout'    =>  '',      # Should be a path relative to the root directory of sw
+            'module/additionalCss/success'     =>  '',      # Should be a path relative to the root directory of sw
             'share/includeSocialMediaShare'    =>  TRUE
         );
     }
@@ -100,10 +117,11 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
      * Retrieves configuration for the plugin's setting page.
      *
      * @param string $name
+     * @param mixed $default
      * @return mixed
      */
-    public static function get($name) {
-        return Shopware()->Plugins()->Frontend()->LfndsDonation()->Config()->get($name);
+    public static function get($name, $default=NULL) {
+        return Shopware()->Plugins()->Frontend()->LfndsDonation()->Config()->get($name, $default);
     }
 
     /**
@@ -133,7 +151,59 @@ class Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager
      * @return boolean
      */
     public static function isAcceptedPaymentProvider($paymentProviderId) {
-        return Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::get('elefundsPaymentProvider' . $paymentProviderId);
+        return self::get('elefundsPaymentProvider' . $paymentProviderId) !== NULL;
+    }
+
+
+    /**
+     * Configures the facade based on the plugin settings and the current locale.
+     *
+     * @param bool $checkoutSuccess
+     * @return Facade
+     */
+    public static function getConfiguredFacade($checkoutSuccess = FALSE) {
+
+        if (!isset(self::$configuredFacade)) {
+
+            if ($checkoutSuccess) {
+                $configuration = new CheckoutSuccessConfiguration();
+            } else {
+                $configuration = new CheckoutConfiguration();
+            }
+
+            $configuration
+                ->setClientId(self::get('elefundsClientId'))
+                ->setApiKey(self::get('elefundsApiKey'))
+                ->setCountrycode(LocaleManager::getLanguage());
+
+
+
+            self::$configuredFacade = new Facade($configuration);
+
+            if ($checkoutSuccess === FALSE) {
+
+                // These values have to be processed after facade initialization.
+                self::$configuredFacade->getConfiguration()
+                    ->setVersionAndModuleIdentifier(Bootstrap::VERSION, 'elefunds-shopware')
+                    ->getView()
+                        ->assignMultiple(
+                            array(
+                                'skin' => array(
+                                    'theme' =>  self::get('elefundsTheme'),
+                                    'color' =>  self::get('elefundsColor')
+                                ),
+                                'currencyDelimiter' => LocaleManager::getLocale('decimalSeparator'),
+                                'formSelector'      => '.additional_footer form',
+                                'totalSelector'     => '#aggregation .totalamount strong',
+                                'rowLabel'          => '#aggregation_left .border > p:first',
+                                'rowValue'          => '#aggregation .border > p:first'
+                            )
+                        );
+            }
+
+        }
+
+        return self::$configuredFacade;
     }
 
 }

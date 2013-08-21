@@ -3,7 +3,7 @@
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,10 @@
  */
 
 namespace Shopware\CustomModels\Elefunds\Donation;
+use DateTime;
 use Shopware\Components\Model\ModelRepository;
+
+use \Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager as ConfigurationManager;
 
 /**
  * The donation repository.
@@ -62,10 +65,9 @@ class Repository extends ModelRepository
 
         $builder = $this->getEntityManager()->createQueryBuilder();
 
-        $daysToLookForPendingDonations = \Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager::getInternal('donations/daysToLookForPending');
-        $observationTime = new \DateTime();
-        $observationTime->modify('- ' . $daysToLookForPendingDonations . 'days');
-
+        $observationTime = new DateTime(
+            sprintf('-%d days', ConfigurationManager::getInternal('donations/daysToLookForPending'))
+        );
 
         $builder->select('donation')
                 ->from('Shopware\CustomModels\Elefunds\Donation\Donation', 'donation')
@@ -108,44 +110,6 @@ class Repository extends ModelRepository
      */
     public function persistAll() {
         $this->getEntityManager()->flush();
-    }
-
-
-    /**
-     * Adds a donation to the repository.
-     *
-     * @param string $foreignId
-     *
-     * @param int $roundup
-     * @param int $grandTotal
-     * @param array $receivers
-     * @param array $availableReceivers
-     * @param array $userData
-     * @param string $languageCode
-     * @param int $suggestedRoundUp
-     * @return void
-     */
-    public function addDonation($foreignId, $roundup, $grandTotal, array $receivers, $availableReceivers, $userData, $languageCode, $suggestedRoundUp = 0) {
-        $donation = new Donation();
-        $donation->setForeignId($foreignId)
-            ->setAmount((int)$roundup)
-            ->setGrandTotal((int)$grandTotal)
-            ->setReceiverIds($receivers)
-            ->setAvailableReceiverIds($availableReceivers)
-            ->setTime(new \DateTime(NULL, new \DateTimeZone('UTC')))
-            ->setSuggestedAmount((int)$suggestedRoundUp);
-
-        foreach ($userData as $key => $value) {
-            call_user_func(array($donation, 'setDonator' . ucfirst($key)), $value);
-        }
-        if (count($userData) > 0) {
-            $donation->setDonatorCountrycode($languageCode);
-        }
-
-
-        $this->getEntityManager()->persist($donation);
-        $this->getEntityManager()->flush();
-
     }
 
 }

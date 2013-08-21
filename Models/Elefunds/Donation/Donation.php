@@ -3,7 +3,7 @@
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 namespace Shopware\CustomModels\Elefunds\Donation;
 
+require_once __DIR__ . '/../../../SDK/Lfnds/Model/DonationInterface.php';
+
+use Lfnds\Model\DonationInterface;
 use Shopware\Components\Model\ModelEntity,
     Doctrine\ORM\Mapping AS ORM,
     Symfony\Component\Validator\Constraints as Assert;
 
+use InvalidArgumentException;
+
 /**
  * A doctrine representation of an elefunds donation.
  *
- * @package    elefunds Shopware Module
  * @subpackage Models
  * @author     Christian Peters <christian@elefunds.de>
  * @copyright  2012 elefunds GmbH <hello@elefunds.de>
@@ -53,22 +58,28 @@ use Shopware\Components\Model\ModelEntity,
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
  *
+ * @ORM\Entity(repositoryClass="Lfnds\DirectDonationBundle\Repository\DonationRepository")
+ * @ORM\Table()
+ *
  * @ORM\Entity(repositoryClass="Repository")
  * @ORM\Table(name="s_plugin_elefunds_donation")
  * @ORM\HasLifecycleCallbacks
  */
-class Donation extends ModelEntity
+class Donation extends ModelEntity implements DonationInterface
 {
 
     /**
      * Donation states
      */
-    const SCHEDULED_FOR_ADDING          = 0,
-          SCHEDULED_FOR_CANCELLATION    = 1,
-          SCHEDULED_FOR_COMPLETION      = 2,
-          PENDING                       = 3,
-          CANCELLED                     = 4,
-          COMPLETED                     = 5;
+    const SCHEDULED_FOR_ADDING                           = 0,
+          SCHEDULED_FOR_CANCELLATION                     = 1,
+          SCHEDULED_FOR_COMPLETION                       = 2,
+          PENDING                                        = 3,
+          CANCELLED                                      = 4,
+          COMPLETED                                      = 5,
+          SCHEDULED_FOR_CANCELLATION_WITH_INITIAL_COMMIT = 6,
+          SCHEDULED_FOR_COMPLETION_WITH_INITIAL_COMMIT   = 7;
+
 
     /**
      * @ORM\Column(name="id", type="integer", nullable=false)
@@ -108,7 +119,7 @@ class Donation extends ModelEntity
      * @var string
      * @ORM\Column(name="receiver_ids", type="string", length=255, nullable=false)
      */
-    private $receiverIds;
+    private $receiverIds = '';
 
     /**
      * Coma separated list of receivers.
@@ -116,7 +127,7 @@ class Donation extends ModelEntity
      * @var string
      * @ORM\Column(name="available_receiver_ids", type="string", length=255, nullable=false)
      */
-    private $availableReceiverIds;
+    private $availableReceiverIds = '';
 
     /**
      * @var \DateTime
@@ -149,8 +160,8 @@ class Donation extends ModelEntity
     private $donatorStreetAddress;
 
     /**
-     * @var int
-     * @ORM\Column(name="donator_zip", type="integer", nullable=true)
+     * @var string
+     * @ORM\Column(name="donator_zip", type="string", nullable=true)
      */
     private $donatorZip;
 
@@ -168,16 +179,16 @@ class Donation extends ModelEntity
 
     /**
      * @var int
-     * @ORM\Column(name="state", type="integer", nullable=false),
+     * @ORM\Column(name="state", type="integer", nullable=true),
      */
-    private $state = 0;
+    private $state = Donation::SCHEDULED_FOR_ADDING;
 
 
     /**
      * Sets the reporting state.
      *
      * @param int $state
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setState($state) {
         $this->state = $state;
@@ -193,13 +204,11 @@ class Donation extends ModelEntity
         return $this->state;
     }
 
-
-
     /**
      * Sets the amount in cent.
      *
      * @param int $amount
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setAmount($amount) {
         $this->amount = $amount;
@@ -220,10 +229,10 @@ class Donation extends ModelEntity
      * the database.
      *
      * @param array $availableReceiverIds
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
-    public function setAvailableReceiverIds($availableReceiverIds) {
-        $this->availableReceiverIds = implode(',', $availableReceiverIds);
+    public function setAvailableReceiverIds(array $availableReceiverIds) {
+        $this->availableReceiverIds .= implode(',', $availableReceiverIds);
         return $this;
     }
 
@@ -241,7 +250,7 @@ class Donation extends ModelEntity
      * Sets the city of the donator.
      *
      * @param string $donatorCity
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorCity($donatorCity) {
         $this->donatorCity = $donatorCity;
@@ -261,7 +270,7 @@ class Donation extends ModelEntity
      * Sets the countrycode / language code of the donator.
      *
      * @param string $donatorCountrycode
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorCountrycode($donatorCountrycode) {
         $this->donatorCountrycode = $donatorCountrycode;
@@ -283,7 +292,7 @@ class Donation extends ModelEntity
      * Validation of the email should be done prior to the setter.
      *
      * @param string $donatorEmail
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorEmail($donatorEmail) {
         $this->donatorEmail = $donatorEmail;
@@ -303,7 +312,7 @@ class Donation extends ModelEntity
      * Sets the donator's first name
      *
      * @param string $donatorFirstName
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorFirstName($donatorFirstName) {
         $this->donatorFirstName = $donatorFirstName;
@@ -323,7 +332,7 @@ class Donation extends ModelEntity
      * Sets the donator's last name
      *
      * @param string $donatorLastName
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorLastName($donatorLastName) {
         $this->donatorLastName = $donatorLastName;
@@ -343,7 +352,7 @@ class Donation extends ModelEntity
      * Sets the donator's street address.
      *
      * @param string $donatorStreetAddress
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setDonatorStreetAddress($donatorStreetAddress) {
         $this->donatorStreetAddress = $donatorStreetAddress;
@@ -362,8 +371,8 @@ class Donation extends ModelEntity
     /**
      * Sets the zip code of the donator.
      *
-     * @param int $donatorZip
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @param string $donatorZip
+     * @return Donation
      */
     public function setDonatorZip($donatorZip) {
         $this->donatorZip = $donatorZip;
@@ -383,7 +392,7 @@ class Donation extends ModelEntity
      * Sets the foreignId, preferably the order id.
      *
      * @param string $foreignId
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setForeignId($foreignId) {
         $this->foreignId = $foreignId;
@@ -403,7 +412,7 @@ class Donation extends ModelEntity
      * Sets the grand total, prior to the roundup.
      *
      * @param int $grandTotal
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setGrandTotal($grandTotal) {
         $this->grandTotal = $grandTotal;
@@ -423,10 +432,10 @@ class Donation extends ModelEntity
      * Sets all receivers and maps them to a csv for the database.
      *
      * @param array $receiverIds
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
-    public function setReceiverIds($receiverIds) {
-        $this->receiverIds = implode(',', $receiverIds);
+    public function setReceiverIds(array $receiverIds) {
+        $this->receiverIds .= implode(',', $receiverIds);
         return $this;
     }
 
@@ -444,7 +453,7 @@ class Donation extends ModelEntity
      * Sets the suggested amount in cent.
      *
      * @param int $suggestedAmount
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
     public function setSuggestedAmount($suggestedAmount) {
         $this->suggestedAmount = $suggestedAmount;
@@ -465,9 +474,9 @@ class Donation extends ModelEntity
      * donation.
      *
      * @param \DateTime $time
-     * @return \Shopware\CustomModels\Elefunds\Donation\Donation
+     * @return Donation
      */
-    public function setTime($time) {
+    public function setTime(\DateTime $time) {
         $this->time = $time;
         return $this;
     }
@@ -480,5 +489,136 @@ class Donation extends ModelEntity
      */
     public function getTime() {
         return $this->time;
+    }
+
+    /**
+     * Adds a receiverId to the list of receivers who preserve a share of
+     * the donation.
+     *
+     * @param int $receiverId
+     * @throws InvalidArgumentException if given id is not a positive integer
+     * @return DonationInterface
+     */
+    public function addReceiverId($receiverId)
+    {
+        if ($this->receiverIds !== '') {
+            $receiverId = ',' . $receiverId;
+        }
+        $this->receiverIds .= $receiverId;
+
+        return $this;
+    }
+
+    /**
+     * Adds a receiverId to the list of receivers that were available to the customer.
+     *
+     * @param int $receiverId
+     * @throws InvalidArgumentException if given id is not a positive integer
+     * @return DonationInterface
+     */
+    public function addAvailableReceiverId($receiverId)
+    {
+        if ($this->availableReceiverIds !== '') {
+            $receiverId = ',' . $receiverId;
+        }
+        $this->availableReceiverIds .= $receiverId;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the donator information.
+     *
+     * The setting of the donator information is optional, but required if the donator want to get a donation receipt.
+     * If needed, all you need to do is to provide these information, everything else is taken care of be the
+     * elefunds foundation.
+     *
+     * @param string $email
+     * @param string $firstName
+     * @param string $lastName
+     * @param string $streetAddress
+     * @param int|string $zip
+     * @param string $city
+     * @param string $countryCode two digit country code
+     *
+     * @return DonationInterface
+     * @throws InvalidArgumentException
+     */
+    public function setDonator($email, $firstName, $lastName, $streetAddress, $zip, $city, $countryCode = NULL)
+    {
+        // We do not want to invalidate the entire model, if the donator information do not validate.
+        // Hence, we just perform a check here and just fail silently if we do not have correct Information.
+        $validationChecks = array(
+            filter_var($email, FILTER_VALIDATE_EMAIL),
+            // We can check all strings in one test
+            filter_var($firstName . $lastName . $streetAddress . $city . $countryCode, FILTER_SANITIZE_STRING),
+            filter_var($zip, FILTER_VALIDATE_INT) || ctype_digit($zip),
+            strlen($countryCode) === 2
+        );
+
+        if(!in_array(FALSE, $validationChecks)) {
+            $this->setDonatorEmail($email)
+                ->setDonatorFirstName($firstName)
+                ->setDonatorLastName($lastName)
+                ->setDonatorStreetAddress($streetAddress)
+                ->setDonatorZip((string)$zip)
+                ->setDonatorCity($city)
+                ->setDonatorCountrycode($countryCode);
+        }
+        return $this;
+    }
+
+    /**
+     * Returns the array with donator information.
+     *
+     * @return array
+     */
+    public function getDonatorInformation()
+    {
+        $donator = array(
+            'firstName'      =>  $this->getDonatorFirstName(),
+            'lastName'       =>  $this->getDonatorLastName(),
+            'email'          =>  $this->getDonatorEmail(),
+            'streetAddress'  =>  $this->getDonatorStreetAddress(),
+            'zip'            =>  $this->getDonatorZip(),
+            'city'           =>  $this->getDonatorCity(),
+            'countryCode'    =>  $this->getDonatorCountrycode()
+        );
+
+        return in_array(NULL, $donator) ? array() : $donator;
+    }
+
+    /**
+     * Returns an associative array with all available information
+     * about this donation instance.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        $donationAsArray = array(
+            'foreignId'             =>  $this->getForeignId(),
+            'donationTimestamp'     =>  $this->getTime()->format(\DateTime::ISO8601),
+            'donationAmount'        =>  $this->getAmount(),
+            'receivers'             =>  $this->getReceiverIds(),
+            'receiversAvailable'    =>  $this->getAvailableReceiverIds()
+        );
+
+        // Optional vars
+        $donator = $this->getDonatorInformation();
+        if (count($donator) > 0) {
+            $donationAsArray['donator'] = $donator;
+        }
+
+        if ($this->getGrandTotal() !== NULL) {
+            $donationAsArray['grandTotal'] = $this->getGrandTotal();
+        }
+
+        if ($this->getSuggestedAmount() !== NULL) {
+            $donationAsArray['donationAmountSuggested'] = $this->getSuggestedAmount();
+        }
+
+        return $donationAsArray;
     }
 }

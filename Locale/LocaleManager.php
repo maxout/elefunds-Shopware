@@ -3,7 +3,7 @@
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,12 +81,14 @@ class Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager
             'de'    =>  array(
                 'additionalInvoiceText'     => 'Die Spende wird vereinnahmt für die elefunds Stiftung gUG und zu 100% an die ausgewählten Organisationen weitergeleitet. Der Kaufbeleg ersetzt keine Spendenbescheinigung im Sinne des Steuerrechts.',
                 'donationTitle'             => 'Spende via elefunds',
-                'acceptAsPaymentProvider'   => 'elefunds bei %s einblenden'
+                'acceptAsPaymentProvider'   => 'elefunds bei %s einblenden',
+                'decimalSeparator'          => ','
             ),
             'en'    =>  array(
                 'additionalInvoiceText'     => 'Your donation is processed by the elefunds Foundation gUG which forwards 100% to your chosen charities.',
                 'donationTitle'             => 'Donation via elefunds',
-                'acceptAsPaymentProvider'   => 'Enable elefunds with %s'
+                'acceptAsPaymentProvider'   => 'Enable elefunds with %s',
+                'decimalSeparator'          => '.'
             )
         );
     }
@@ -127,7 +129,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager
 
         $fullyQualifiedFilename = dirname(__FILE__) . DIRECTORY_SEPARATOR . $filename;
 
-        if (file_exists($fullyQualifiedFilename) && is_readable($fullyQualifiedFilename)) {
+        if (is_readable($fullyQualifiedFilename)) {
             return file_get_contents($fullyQualifiedFilename);
         }
         return '';
