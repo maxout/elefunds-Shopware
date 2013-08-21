@@ -41,6 +41,8 @@ use Shopware\Models\Order\Detail;
 use \Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager as SyncManager;
 
 /**
+ * Cancels the donation when it's removed from an order in the backend.
+ *
  * @package    Events
  * @author     Christian Peters <christian@elefunds.de>
  * @copyright  2012 elefunds GmbH <hello@elefunds.de>

@@ -63,6 +63,9 @@ class Shopware_Plugins_Frontend_LfndsDonation_Migration_SchemaManager {
      */
     protected $schemaTool;
 
+    /**
+     * Initiates the schema processing.
+     */
     public function __construct() {
         $this->modelManager = Shopware()->Models();
         $this->modelManager->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');

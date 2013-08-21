@@ -203,10 +203,13 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
     /**
      * Wrapper for the version string.
      *
+     * We can not return self::VERSION here - as the plugin uploader from shopware is stupid as hell
+     * and does not accept that.
+     *
      * @return string
      */
     public function getVersion() {
-        return self::VERSION;
+        return '2.0.0';
     }
 
 }

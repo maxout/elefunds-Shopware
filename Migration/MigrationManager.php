@@ -75,6 +75,8 @@ class Shopware_Plugins_Frontend_LfndsDonation_Migration_MigrationManager {
     protected $schema;
 
     /**
+     * Initiates the Migration.
+     *
      * @param string $currentVersion
      */
     public function __construct($currentVersion) {

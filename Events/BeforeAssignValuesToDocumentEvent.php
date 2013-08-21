@@ -40,6 +40,8 @@ use \Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager as LocaleManag
 use \Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager as ConfigurationManager;
 
 /**
+ * Adds additional text to receipt with a donation.
+ *
  * @package    Events
  * @author     Christian Peters <christian@elefunds.de>
  * @copyright  2012 elefunds GmbH <hello@elefunds.de>

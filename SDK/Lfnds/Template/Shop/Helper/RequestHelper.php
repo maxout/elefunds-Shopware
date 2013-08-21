@@ -62,18 +62,10 @@ class RequestHelper {
 
     /**
      * Accepts the request as array.
-     *
-     * However, it's recommended to not pass an request, the helper will then use (and NOT alter) the $_POST
-     * superglobal.
-     *
      * @param array $request
      */
     public function __construct(array $request = NULL) {
-        if (is_null($request)) {
-            $this->request = $_POST;
-        } else {
             $this->request = $request;
-        }
     }
 
     /**
@@ -123,6 +115,11 @@ class RequestHelper {
         return $this->receivers;
     }
 
+    /**
+     * Returns the receivers that were available during the checkout.
+     *
+     * @return array
+     */
     public function getAvailableReceiverIds() {
         return $this->validatedReceivers(TRUE);
     }
@@ -175,6 +172,8 @@ class RequestHelper {
     }
 
     /**
+     * Returns true if the requestKey is positive.
+     *
      * @param string $requestKey
      * @return bool
      */

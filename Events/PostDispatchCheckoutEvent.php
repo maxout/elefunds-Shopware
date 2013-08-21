@@ -45,6 +45,8 @@ use \Shopware_Plugins_Frontend_LfndsDonation_Manager_SyncManager as SyncManager;
 
 
 /**
+ * Hook into the checkout process.
+ *
  * @package    Events
  * @author     Christian Peters <christian@elefunds.de>
  * @copyright  2012 elefunds GmbH <hello@elefunds.de>

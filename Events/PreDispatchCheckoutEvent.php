@@ -41,6 +41,8 @@ use Lfnds\Template\Shop\Helper\RequestHelper;
 use \Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager as LocaleManager;
 
 /**
+ * Adds the donation to the order.
+ *
  * @package    Events
  * @author     Christian Peters <christian@elefunds.de>
  * @copyright  2012 elefunds GmbH <hello@elefunds.de>
@@ -68,13 +70,13 @@ class Shopware_Plugins_Frontend_LfndsDonation_Events_PreDispatchCheckoutEvent  {
         $action =  strtolower($request->getActionName());
 
         if ($action === 'payment' || $action === 'finish') {
-            $this->requestHelper = new RequestHelper();
+            $this->requestHelper = new RequestHelper($request->getParams());
             $this->prepareDonation($request);
         }
     }
 
     /**
-     * Prepares the donation based uppn the request and pushes the relevant data into the session.
+     * Prepares the donation based upon the request and pushes the relevant data into the session.
      *
      * @param Enlight_Controller_Request_RequestHttp $request
      * @return void
