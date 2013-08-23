@@ -41,7 +41,7 @@ use \Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager as LocaleManag
 use \Shopware_Plugins_Frontend_LfndsDonation_Configuration_ConfigurationManager as ConfigurationManager;
 use \Shopware_Plugins_Frontend_LfndsDonation_Events_PreDispatchCheckoutEvent as PreDispatchCheckoutEvent;
 use \Shopware_Plugins_Frontend_LfndsDonation_Events_PostDispatchCheckoutEvent as PostDispatchCheckoutEvent;
-use \Shopware_Plugins_Frontend_LfndsDonation_Events_PositionRemovedFromOrderEvent as PositionRemovedFromOrderEvent;
+use \Shopware_Plugins_Frontend_LfndsDonation_Events_OrderChangedEvent as OrderChangedEvent;
 use \Shopware_Plugins_Frontend_LfndsDonation_Events_BeforeAssignValuesToDocumentEvent as BeforeAssignValuesToDocumentEvent;
 
 require_once __DIR__ . '/SDK/Lfnds/Facade.php';
@@ -59,7 +59,7 @@ require_once __DIR__ . '/SDK/Lfnds/Facade.php';
 class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
 
-    const VERSION = '2.0.0';
+    const VERSION = '2.0.1';
 
     /**
      * Initializes the configuration form,  creates the database schema and subscribes
@@ -88,7 +88,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
 
         $this->subscribeEvent(
             'Enlight_Controller_Action_PreDispatch_Backend_Order',
-            'onPositionRemovedFromOrder'
+            'onOrderChanged'
         );
 
         $migration = new MigrationManager(self::VERSION);
@@ -165,8 +165,8 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @param Enlight_Controller_EventArgs $args
      * @return void
      */
-    public function onPositionRemovedFromOrder(Enlight_Controller_EventArgs $args) {
-        $event = new PositionRemovedFromOrderEvent();
+    public function onOrderChanged(Enlight_Controller_EventArgs $args) {
+        $event = new OrderChangedEvent();
         $event->execute($args);
     }
 
@@ -209,7 +209,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return string
      */
     public function getVersion() {
-        return '2.0.0';
+        return '2.0.1';
     }
 
 }
