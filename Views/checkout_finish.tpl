@@ -19,6 +19,7 @@
 {/block}
 
 {block name='frontend_checkout_cart_item_details'}
+
 <div class="basket_details">
 	{* Article name *}
 	{if $sBasketItem.modus == 0}
@@ -41,4 +42,5 @@
 	
 	{block name='frontend_checkout_cart_item_details_inline'}{/block}
 </div>
+
 {/block}

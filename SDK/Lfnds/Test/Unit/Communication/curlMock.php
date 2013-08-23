@@ -3,7 +3,7 @@
 /**
  * elefunds API PHP Library
  *
- * Copyright (c) 2012 - 2013, elefunds GmbH <contact@elefunds>.
+ * Copyright (c) 2012 - 2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

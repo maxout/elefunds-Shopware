@@ -3,7 +3,7 @@
 /**
  * elefunds API PHP Library
  *
- * Copyright (c) 2012 - 2013, elefunds GmbH <contact@elefunds>.
+ * Copyright (c) 2012 - 2013, elefunds GmbH <hello@elefunds.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ require_once __DIR__ . '/../../../../FacadeInterface.php';
  * @package    elefunds API PHP Library
  * @subpackage Test
  * @author     Christian Peters <christian@elefunds.de>
- * @copyright  2012 - 2013 elefunds GmbH <contact@elefunds>
+ * @copyright  2012 - 2013 elefunds GmbH <hello@elefunds.de>
  * @license    http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
  * @link       http://www.elefunds.de
  * @since      File available since Release 2.0.0
