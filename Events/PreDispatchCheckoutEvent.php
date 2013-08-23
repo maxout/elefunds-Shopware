@@ -3,7 +3,7 @@
 /**
  * elefunds Shopware Module
  *
- * Copyright (c) 2012-2013, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012-2013, elefunds GmbH <contact@elefunds>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ use \Shopware_Plugins_Frontend_LfndsDonation_Locale_LocaleManager as LocaleManag
  *
  * @package    Events
  * @author     Christian Peters <christian@elefunds.de>
- * @copyright  2012 elefunds GmbH <hello@elefunds.de>
+ * @copyright  2012 elefunds GmbH <contact@elefunds>
  * @license    http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
  * @link       http://www.elefunds.de
  * @since      File available since Release 2.0.0

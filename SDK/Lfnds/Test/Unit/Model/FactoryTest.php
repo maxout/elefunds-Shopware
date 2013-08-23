@@ -3,7 +3,7 @@
 /**
  * elefunds API PHP Library 
  *
- * Copyright (c) 2012 - 2013, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012 - 2013, elefunds GmbH <contact@elefunds>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ require_once __DIR__ . '/../../../Model/Receiver.php';
  * @package    elefunds API PHP Library
  * @subpackage Test
  * @author     Christian Peters <christian@elefunds.de>
- * @copyright  2012 - 2013 elefunds GmbH <hello@elefunds.de>
+ * @copyright  2012 - 2013 elefunds GmbH <contact@elefunds>
  * @license    http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0

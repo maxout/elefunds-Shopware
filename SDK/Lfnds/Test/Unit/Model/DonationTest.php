@@ -3,7 +3,7 @@
 /**
  * elefunds API PHP Library 
  *
- * Copyright (c) 2012 - 2013, elefunds GmbH <hello@elefunds.de>.
+ * Copyright (c) 2012 - 2013, elefunds GmbH <contact@elefunds>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ require_once __DIR__ . '/../../../Model/Donation.php';
  * @package    elefunds API PHP Library
  * @subpackage Test
  * @author     Christian Peters <christian@elefunds.de>
- * @copyright  2012 - 2013 elefunds GmbH <hello@elefunds.de>
+ * @copyright  2012 - 2013 elefunds GmbH <contact@elefunds>
  * @license    http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
  * @link       http://www.elefunds.de
  * @since      File available since Release 1.0.0
@@ -358,11 +358,11 @@ class DonationTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function setDonatorAcceptsAValidUser() {
-        $this->donation->setDonator('hello@elefunds.de', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'de');
+        $this->donation->setDonator('contact@elefunds', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'de');
 
         $donator = $this->donation->getDonatorInformation();
 
-        $this->assertSame($donator['email'], 'hello@elefunds.de');
+        $this->assertSame($donator['email'], 'contact@elefunds');
         $this->assertSame($donator['firstName'], 'Christian');
         $this->assertSame($donator['lastName'], 'Peters');
         $this->assertSame($donator['streetAddress'], 'Schönhauser Allee 124');
@@ -371,7 +371,7 @@ class DonationTest extends PHPUnit_Framework_TestCase {
         $this->assertSame($donator['countryCode'], 'de');
 
         // Should work for digit-only string as zip as well:
-        $this->donation->setDonator('hello@elefunds.de', 'Christian', 'Peters', 'Schönhauser Allee 124', '10243', 'Berlin', 'de');
+        $this->donation->setDonator('contact@elefunds', 'Christian', 'Peters', 'Schönhauser Allee 124', '10243', 'Berlin', 'de');
         $donator = $this->donation->getDonatorInformation();
         $this->assertSame($donator['zip'], '10243');
 
@@ -393,7 +393,7 @@ class DonationTest extends PHPUnit_Framework_TestCase {
      * @test
      */
     public function setDonatorDoesNotUseInvalidCountryCodes() {
-        $this->donation->setDonator('hello@elefunds.de', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'invalid');
+        $this->donation->setDonator('contact@elefunds', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'invalid');
 
         $donator = $this->donation->getDonatorInformation();
         $this->assertSame(FALSE, isset($donator['countryCode']));
@@ -429,7 +429,7 @@ class DonationTest extends PHPUnit_Framework_TestCase {
 
         $this->donation->setGrandTotal(999);
         $this->donation->setSuggestedAmount(888);
-        $this->donation->setDonator('hello@elefunds.de', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'invalid');
+        $this->donation->setDonator('contact@elefunds', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', 'invalid');
 
         $array = $this->donation->toArray();
         $this->assertSame($array['grandTotal'], 999);
