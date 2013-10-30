@@ -62,8 +62,18 @@ class RequestHelperTest extends \PHPUnit_Framework_TestCase {
      * @test
      */
     public function missingRequestWillFallbackToPostSuperglobal() {
-        // Test removed, because of the unbelievable stupid shopware uploader
-        $this->assertTrue(TRUE);
+        $_POST['addedValue'] = TRUE;
+        $helper = new RequestHelper();
+
+        $reflectionClass = new ReflectionClass('Lfnds\Template\Shop\Helper\RequestHelper');
+
+        $reflectionProperty = $reflectionClass->getProperty('request');
+        $reflectionProperty->setAccessible(TRUE);
+        $request = $reflectionProperty->getValue($helper);
+
+        $this->assertSame(TRUE, isset($request['addedValue']));
+        $this->assertSame(TRUE, $request['addedValue']);
+
     }
 
     /**
@@ -255,7 +265,7 @@ class RequestHelperTest extends \PHPUnit_Framework_TestCase {
      * @test
      */
     public function getReceiversAsStringReturnsCSV() {
-        $helper = new RequestHelper(array('a', 'b', 'c'));
+        $helper = new RequestHelper(array('elefunds_receiver_names' => array('a', 'b', 'c')));
         $this->assertSame('a, b, c', $helper->getReceiversAsString());
     }
 

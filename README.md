@@ -1,4 +1,4 @@
-elefunds Shopware Module - v2.0.1
+elefunds Shopware Module - v2.0.2
 =================================
 
 The [elefunds](https://elefunds.de) plugin for Shopware. The plugin can be found in the [Shopware Community Store](http://store.shopware.de/werbung-marketing/elefunds-spendenmodul). Alternatively, to install the plugin manually, place the content of this repository into the following folder:

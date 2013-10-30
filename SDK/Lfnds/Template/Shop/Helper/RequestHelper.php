@@ -62,10 +62,18 @@ class RequestHelper {
 
     /**
      * Accepts the request as array.
+     *
+     * However, it's recommended to not pass an request, the helper will then use (and NOT alter) the $_POST
+     * superglobal.
+     *
      * @param array $request
      */
     public function __construct(array $request = NULL) {
+        if (is_null($request)) {
+            $this->request = $_POST;
+        } else {
             $this->request = $request;
+        }
     }
 
     /**
@@ -179,10 +187,14 @@ class RequestHelper {
      */
     protected function isConvertableToPositiveInt($requestKey) {
 
+        if (!isset($this->request[$requestKey])) {
+            return FALSE;
+        }
+
         if (is_int($this->request[$requestKey])) {
             $isInt = TRUE;
         } else {
-            $isInt = isset($this->request[$requestKey]) && ctype_digit($this->request[$requestKey]);
+            $isInt = ctype_digit($this->request[$requestKey]);
         }
 
         return $isInt && (int)$this->request[$requestKey] > 0;
