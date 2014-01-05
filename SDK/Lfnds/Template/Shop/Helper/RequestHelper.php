@@ -63,17 +63,13 @@ class RequestHelper {
     /**
      * Accepts the request as array.
      *
-     * However, it's recommended to not pass an request, the helper will then use (and NOT alter) the $_POST
+     * However, it's recommended to not pass an request, the helper will then use (and NOT alter) the POST
      * superglobal.
      *
      * @param array $request
      */
     public function __construct(array $request = NULL) {
-        if (is_null($request)) {
-            $this->request = $_POST;
-        } else {
-            $this->request = $request;
-        }
+        $this->request = $request;
     }
 
     /**
