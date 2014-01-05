@@ -541,11 +541,11 @@ class Donation extends ModelEntity implements DonationInterface
      * @param int|string $zip
      * @param string $city
      * @param string $countryCode two digit country code
+     * @param string $company
      *
      * @return DonationInterface
-     * @throws InvalidArgumentException
      */
-    public function setDonator($email, $firstName, $lastName, $streetAddress, $zip, $city, $countryCode = NULL)
+    public function setDonator($email, $firstName, $lastName, $streetAddress, $zip, $city, $countryCode = NULL, $company = '')
     {
         // We do not want to invalidate the entire model, if the donator information do not validate.
         // Hence, we just perform a check here and just fail silently if we do not have correct Information.

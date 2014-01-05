@@ -59,7 +59,7 @@ require_once __DIR__ . '/SDK/Lfnds/Facade.php';
 class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
 
-    const VERSION = '2.0.1';
+    const VERSION = '2.0.3';
 
     /**
      * Initializes the configuration form,  creates the database schema and subscribes
@@ -209,7 +209,7 @@ class Shopware_Plugins_Frontend_LfndsDonation_Bootstrap extends Shopware_Compone
      * @return string
      */
     public function getVersion() {
-        return '2.0.1';
+        return '2.0.3';
     }
 
 }
