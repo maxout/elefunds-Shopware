@@ -399,6 +399,9 @@ class DonationTest extends PHPUnit_Framework_TestCase {
         $this->assertSame(FALSE, isset($donator['countryCode']));
     }
 
+    /**
+     * setDonatorExpectsCompanyNameAsString
+     */
     public function setDonatorExpectsCompanyNameAsString() {
         $this->donation->setDonator('hello@elefunds.de', 'Christian', 'Peters', 'Schönhauser Allee 124', 10243, 'Berlin', NULL, 'elefunds');
 

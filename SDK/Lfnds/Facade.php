@@ -369,6 +369,13 @@ class Facade implements FacadeInterface {
         return $tagStrings;
     }
 
+    /**
+     * Returns the receipt disclaimer for the AGB.
+     *
+     * @return string
+     * @throws Exception\ElefundsException
+     * @throws Exception\ElefundsCommunicationException
+     */
     public function getReceiptDisclaimer() {
         $countryCode = $this->configuration->getCountrycode();
         if (!isset($countryCode)) {
@@ -391,6 +398,13 @@ class Facade implements FacadeInterface {
         return str_replace('\\n', '<br />', $content);
     }
 
+    /**
+     * Returns the terms of service for the plugin.
+     *
+     * @return string
+     * @throws Exception\ElefundsException
+     * @throws Exception\ElefundsCommunicationException
+     */
     public function getTermsOfService() {
         $countryCode = $this->configuration->getCountrycode();
         if (!isset($countryCode)) {

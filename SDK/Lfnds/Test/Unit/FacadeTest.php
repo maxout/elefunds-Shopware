@@ -741,6 +741,8 @@ class FacadeTest extends PHPUnit_Framework_TestCase {
     }
 
     /**
+     * getTermsOfServiceThrowsErrorIfCountryCodeIsNotSet
+     *
      * @test
      * @expectedException \Lfnds\Exception\ElefundsException
      */
